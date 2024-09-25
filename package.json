@@ -1,0 +1,19 @@
+{
+  "name": "challenge",
+  "version": "1.0.0",
+  "description": "Honey Insurance code challenge",
+  "main": "index.js",
+  "scripts": {
+    "format": "prettier -w *.js",
+    "test": "jest",
+    "test:watch": "jest --watchAll"
+  },
+  "author": "Chris Armstrong",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@babel/preset-env": "^7.25.4",
+    "@babel/preset-typescript": "^7.24.7",
+    "jest": "^27.4.5",
+    "prettier": "^2.5.1"
+  }
+}
