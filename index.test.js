@@ -2,6 +2,9 @@ const {
   calculateEnergyUsageSimple,
   calculateEnergySavings,
   calculateEnergyUsageForDay,
+  prepareEvents,
+  calculateSavingsForEvent,
+  determineNewState,
   MAX_IN_PERIOD,
 } = require('./index');
 
@@ -124,26 +127,26 @@ describe('calculateEnergyUsageSimple', () => {
       80 - 0 + (1440 - 656)
     );
   });
-});
 
-it('should throw an error for negative timestamps', () => {
-  const usageProfile = {
-    initial: 'on',
-    events: [{ timestamp: -5, state: 'off' }],
-  };
-  expect(() => calculateEnergyUsageSimple(usageProfile)).toThrow(
-    'Invalid timestamp: Expected between 0 and 1440, but got -5'
-  );
-});
+  it('should throw an error for negative timestamps', () => {
+    const usageProfile = {
+      initial: 'on',
+      events: [{ timestamp: -5, state: 'off' }],
+    };
+    expect(() => calculateEnergyUsageSimple(usageProfile)).toThrow(
+      'Invalid timestamp: Expected between 0 and 1440, but got -5'
+    );
+  });
 
-it('should throw an error for timestamps greater than 1440', () => {
-  const usageProfile = {
-    initial: 'on',
-    events: [{ timestamp: 1500, state: 'off' }],
-  };
-  expect(() => calculateEnergyUsageSimple(usageProfile)).toThrow(
-    'Invalid timestamp: Expected between 0 and 1440, but got 1500'
-  );
+  it('should throw an error for timestamps greater than 1440', () => {
+    const usageProfile = {
+      initial: 'on',
+      events: [{ timestamp: 1500, state: 'off' }],
+    };
+    expect(() => calculateEnergyUsageSimple(usageProfile)).toThrow(
+      'Invalid timestamp: Expected between 0 and 1440, but got 1500'
+    );
+  });
 });
 
 // Part 2
@@ -227,6 +230,57 @@ describe('calculateEnergySavings', () => {
   });
 });
 
+describe('prepareEvents', () => {
+  it('should sort events and add initial state at the end', () => {
+    const events = [
+      { state: 'on', timestamp: 2 },
+      { state: 'off', timestamp: 1 },
+    ];
+    const initialState = 'off';
+    const result = prepareEvents(events, initialState);
+    expect(result).toEqual([
+      { state: 'off', timestamp: 1 },
+      { state: 'on', timestamp: 2 },
+      { state: 'off', timestamp: MAX_IN_PERIOD },
+    ]);
+  });
+});
+
+describe('calculateSavingsForEvent', () => {
+  it('should calculate savings when state changes from auto-off to on', () => {
+    const savings = calculateSavingsForEvent('auto-off', 1000, {
+      state: 'on',
+      timestamp: 1500,
+    });
+    expect(savings).toBe(500);
+  });
+
+  it('should return 0 for other state changes', () => {
+    const savings = calculateSavingsForEvent('on', 1000, {
+      state: 'off',
+      timestamp: 1500,
+    });
+    expect(savings).toBe(0);
+  });
+});
+
+describe('determineNewState', () => {
+  it.each([
+    ['on', 'off', 'off'],
+    ['on', 'auto-off', 'auto-off'],
+    ['off', 'on', 'on'],
+    ['auto-off', 'on', 'on'],
+    ['on', 'on', 'on'],
+    ['off', 'off', 'off'],
+    ['auto-off', 'off', 'auto-off'],
+  ])(
+    'should correctly determine new state from %s to %s',
+    (currentState, newState, expected) => {
+      expect(determineNewState(currentState, newState)).toBe(expected);
+    }
+  );
+});
+
 // Part 3
 describe('calculateEnergyUsageForDay', () => {
   const monthProfile = {
@@ -300,13 +354,13 @@ describe('calculateEnergyUsageForDay', () => {
     // The regular expression matches the message of the Error(), which is
     // the first parameter to the Error class constructor.
     expect(() => calculateEnergyUsageForDay(monthProfile, -5)).toThrow(
-      /day out of range/
+      /Day out of range/
     );
     expect(() => calculateEnergyUsageForDay(monthProfile, 0)).toThrow(
-      /day out of range/
+      /Day out of range/
     );
     expect(() => calculateEnergyUsageForDay(monthProfile, 366)).toThrow(
-      /day out of range/
+      /Day out of range/
     );
   });
 
